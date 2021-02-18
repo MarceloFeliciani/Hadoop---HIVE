@@ -1,0 +1,233 @@
+Criação de tabela RAW para armazenar os dados crus.
+Posteriormente serão criadas tabelas a partir desta, para ter melhor performance nas consultas.
+Não foram criadas partições.
+
+##############################################################################################
+
+PS E:\projetos\docker-bigdata> docker exec -it namenode bash
+
+root@namenode:/# ls /input/exercises-data/populacaoLA/
+README.md  populacaoLA.csv  populacaoLA.json
+
+root@namenode:/# hdfs dfs -mkdir /user/aluno/feliciani/data/populacao
+
+root@namenode:/# hdfs dfs -ls /user/aluno/feliciani/data
+Found 3 items
+drwxr-xr-x   - root supergroup          0 2021-02-15 16:45 /user/aluno/feliciani/data/escola
+drwxr-xr-x   - root supergroup          0 2021-02-18 14:56 /user/aluno/feliciani/data/populacao
+-rw-r--r--   2 root supergroup          0 2021-02-15 17:36 /user/aluno/feliciani/data/test
+
+root@namenode:/# hdfs dfs -put /input/exercises-data/populacaoLA/populacaoLA.csv /user/aluno/feliciani/data/populacao
+
+root@namenode:/# hdfs dfs -ls /user/aluno/feliciani/data/populacao
+Found 1 items
+-rw-r--r--   3 root supergroup      12183 2021-02-18 14:58 /user/aluno/feliciani/data/populacao/populacaoLA.csv
+
+
+root@namenode:/# hdfs dfs -cat /user/aluno/feliciani/data/populacao/populacaoLA.csv | head -n 5
+Zip Code,Total Population,Median Age,Total Males,Total Females,Total Households,Average Household Size
+91371,1,73.5,0,1,1,1
+90001,57110,26.6,28468,28642,12971,4.4
+90002,51223,25.5,24876,26347,11731,4.36
+90003,66266,26.3,32631,33635,15642,4.22
+
+root@namenode:/# exit
+
+PS E:\projetos\docker-bigdata> docker exec -it hive-server bash
+
+root@hive_server:/opt#
+
+root@hive_server:/opt# beeline --help
+Usage: java org.apache.hive.cli.beeline.BeeLine
+   -u <database url>               the JDBC URL to connect to
+   -r                              reconnect to last saved connect url (in conjunction with !save)
+   -n <username>                   the username to connect as
+   -p <password>                   the password to connect as
+   -d <driver class>               the driver class to use
+   -i <init file>                  script file for initialization
+   -e <query>                      query that should be executed
+   -f <exec file>                  script file that should be executed
+   -w (or) --password-file <password file>  the password file to read password from
+   --hiveconf property=value       Use value for given property
+   --hivevar name=value            hive variable name and value
+                                   This is Hive specific settings in which variables
+                                   can be set at session level and referenced in Hive
+                                   commands or queries.
+   --property-file=<property-file> the file to read connection properties (url, driver, user, password) from
+   --color=[true/false]            control whether color is used for display
+   --showHeader=[true/false]       show column names in query results
+   --headerInterval=ROWS;          the interval between which heades are displayed
+   --fastConnect=[true/false]      skip building table/column list for tab-completion
+   --autoCommit=[true/false]       enable/disable automatic transaction commit
+   --verbose=[true/false]          show verbose error messages and debug info
+   --showWarnings=[true/false]     display connection warnings
+   --showDbInPrompt=[true/false]   display the current database name in the prompt
+   --showNestedErrs=[true/false]   display nested errors
+   --numberFormat=[pattern]        format numbers using DecimalFormat pattern
+   --force=[true/false]            continue running script even after errors
+   --maxWidth=MAXWIDTH             the maximum width of the terminal
+   --maxColumnWidth=MAXCOLWIDTH    the maximum width to use when displaying columns
+   --silent=[true/false]           be more silent
+   --autosave=[true/false]         automatically save preferences
+   --outputformat=[table/vertical/csv2/tsv2/dsv/csv/tsv]  format mode for result display
+                                   Note that csv, and tsv are deprecated - use csv2, tsv2 instead
+   --incremental=[true/false]      Defaults to false. When set to false, the entire result set
+                                   is fetched and buffered before being displayed, yielding optimal
+                                   display column sizing. When set to true, result rows are displayed
+                                   immediately as they are fetched, yielding lower latency and
+                                   memory usage at the price of extra display column padding.
+                                   Setting --incremental=true is recommended if you encounter an OutOfMemory
+                                   on the client side (due to the fetched result set size being large).
+                                   Only applicable if --outputformat=table.
+   --incrementalBufferRows=NUMROWS the number of rows to buffer when printing rows on stdout,
+                                   defaults to 1000; only applicable if --incremental=true
+                                   and --outputformat=table
+   --truncateTable=[true/false]    truncate table column when it exceeds length
+   --delimiterForDSV=DELIMITER     specify the delimiter for delimiter-separated values output format (default: |)
+   --isolation=LEVEL               set the transaction isolation level
+   --nullemptystring=[true/false]  set to true to get historic behavior of printing null as empty string
+   --maxHistoryRows=MAXHISTORYROWS The maximum number of rows to store beeline history.
+   --help                          display this message
+
+   Example:
+    1. Connect using simple authentication to HiveServer2 on localhost:10000
+    $ beeline -u jdbc:hive2://localhost:10000 username password
+
+    2. Connect using simple authentication to HiveServer2 on hs.local:10000 using -n for username and -p for password
+    $ beeline -n username -p password -u jdbc:hive2://hs2.local:10012
+
+    3. Connect using Kerberos authentication with hive/localhost@mydomain.com as HiveServer2 principal
+    $ beeline -u "jdbc:hive2://hs2.local:10013/default;principal=hive/localhost@mydomain.com"
+
+    4. Connect using SSL connection to HiveServer2 on localhost at 10000
+    $ beeline "jdbc:hive2://localhost:10000/default;ssl=true;sslTrustStore=/usr/local/truststore;trustStorePassword=mytruststorepassword"
+
+    5. Connect using LDAP authentication
+    $ beeline -u jdbc:hive2://hs2.local:10013/default <ldap-username> <ldap-password>
+
+
+root@hive_server:/opt# beeline -u jdbc:hive2://localhost:10000
+SLF4J: Class path contains multiple SLF4J bindings.
+SLF4J: Found binding in [jar:file:/opt/hive/lib/log4j-slf4j-impl-2.6.2.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+SLF4J: Found binding in [jar:file:/opt/hadoop-2.7.4/share/hadoop/common/lib/slf4j-log4j12-1.7.10.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+SLF4J: See http://www.slf4j.org/codes.html#multiple_bindings for an explanation.
+SLF4J: Actual binding is of type [org.apache.logging.slf4j.Log4jLoggerFactory]
+Connecting to jdbc:hive2://localhost:10000
+Connected to: Apache Hive (version 2.3.2)
+Driver: Hive JDBC (version 2.3.2)
+Transaction isolation: TRANSACTION_REPEATABLE_READ
+Beeline version 2.3.2 by Apache Hive
+
+
+0: jdbc:hive2://localhost:10000>show databases;
++----------------+
+| database_name  |
++----------------+
+| default        |
++----------------+
+1 row selected (6.748 seconds)
+0: jdbc:hive2://localhost:10000> create database feliciani;
+No rows affected (5.298 seconds)
+
+
+0: jdbc:hive2://localhost:10000> show databases;
++----------------+
+| database_name  |
++----------------+
+| default        |
+| feliciani      |
++----------------+
+2 rows selected (0.061 seconds)
+
+0: jdbc:hive2://localhost:10000> create table pop(
+. . . . . . . . . . . . . . . .> zip_code int,
+. . . . . . . . . . . . . . . .> total_population int,
+. . . . . . . . . . . . . . . .> median_age float,
+. . . . . . . . . . . . . . . .> total_males int,
+. . . . . . . . . . . . . . . .> total_females int,
+. . . . . . . . . . . . . . . .> total_household_size int,
+. . . . . . . . . . . . . . . .> average_household_size float
+. . . . . . . . . . . . . . . .> )
+. . . . . . . . . . . . . . . .> row format delimited
+. . . . . . . . . . . . . . . .> fields terminated by ','
+. . . . . . . . . . . . . . . .> lines terminated by '\n'
+. . . . . . . . . . . . . . . .> stored as textfile
+. . . . . . . . . . . . . . . .> tblproperties("skip.header.line.count"="1");
+No rows affected (2.684 seconds)
+0: jdbc:hive2://localhost:10000> desc pop;
++-------------------------+------------+----------+
+|        col_name         | data_type  | comment  |
++-------------------------+------------+----------+
+| zip_code                | int        |          |
+| total_population        | int        |          |
+| median_age              | float      |          |
+| total_males             | int        |          |
+| total_females           | int        |          |
+| total_household_size    | int        |          |
+| average_household_size  | float      |          |
++-------------------------+------------+----------+
+7 rows selected (1.368 seconds)
+
+
+
+0: jdbc:hive2://localhost:10000> desc formatted pop;
++-------------------------------+----------------------------------------------------+-----------------------------+
+|           col_name            |                     data_type                      |           comment           |
++-------------------------------+----------------------------------------------------+-----------------------------+
+| # col_name                    | data_type                                          | comment                     |
+|                               | NULL                                               | NULL                        |
+| zip_code                      | int                                                |                             |
+| total_population              | int                                                |                             |
+| median_age                    | float                                              |                             |
+| total_males                   | int                                                |                             |
+| total_females                 | int                                                |                             |
+| total_household_size          | int                                                |                             |
+| average_household_size        | float                                              |                             |
+|                               | NULL                                               | NULL                        |
+| # Detailed Table Information  | NULL                                               | NULL                        |
+| Database:                     | default                                            | NULL                        |
+| Owner:                        | root                                               | NULL                        |
+| CreateTime:                   | Thu Feb 18 15:45:23 UTC 2021                       | NULL                        |
+| LastAccessTime:               | UNKNOWN                                            | NULL                        |
+| Retention:                    | 0                                                  | NULL                        |
+| Location:                     | hdfs://namenode:8020/user/hive/warehouse/pop       | NULL                        |
+| Table Type:                   | MANAGED_TABLE                                      | NULL                        |
+| Table Parameters:             | NULL                                               | NULL                        |
+|                               | COLUMN_STATS_ACCURATE                              | {\"BASIC_STATS\":\"true\"}  |
+|                               | numFiles                                           | 0                           |
+|                               | numRows                                            | 0                           |
+|                               | rawDataSize                                        | 0                           |
+|                               | skip.header.line.count                             | 1                           |
+|                               | totalSize                                          | 0                           |
+|                               | transient_lastDdlTime                              | 1613663123                  |
+|                               | NULL                                               | NULL                        |
+| # Storage Information         | NULL                                               | NULL                        |
+| SerDe Library:                | org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe | NULL                        |
+| InputFormat:                  | org.apache.hadoop.mapred.TextInputFormat           | NULL                        |
+| OutputFormat:                 | org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat | NULL                        |
+| Compressed:                   | No                                                 | NULL                        |
+| Num Buckets:                  | -1                                                 | NULL                        |
+| Bucket Columns:               | []                                                 | NULL                        |
+| Sort Columns:                 | []                                                 | NULL                        |
+| Storage Desc Params:          | NULL                                               | NULL                        |
+|                               | field.delim                                        | ,                           |
+|                               | line.delim                                         | \n                          |
+|                               | serialization.format                               | ,                           |
++-------------------------------+----------------------------------------------------+-----------------------------+
+39 rows selected (1.793 seconds)
+
+0: jdbc:hive2://localhost:10000> Closing: 0: jdbc:hive2://localhost:10000  ##################################################### CTRL + d
+
+root@hive_server:/opt# exit  ##################################################### CTRL + d
+
+PS E:\projetos\docker-bigdata> docker-compose stop
+Stopping hive-server               ... done
+Stopping hive_metastore            ... done
+Stopping hive-metastore-postgresql ... done
+Stopping datanode                  ... done
+Stopping hbase-master              ... done
+Stopping zookeeper                 ... done
+Stopping namenode                  ... done
+Stopping database                  ... done
+Stopping spark                     ... done
+PS E:\projetos\docker-bigdata>
