@@ -1,0 +1,100 @@
+0: jdbc:hive2://localhost:10000>
+0: jdbc:hive2://localhost:10000> show databases;
++----------------+
+| database_name  |
++----------------+
+| default        |
+| feliciani      |
++----------------+
+2 rows selected (1.959 seconds)
+0: jdbc:hive2://localhost:10000> use feliciani;
+No rows affected (0.05 seconds)
+0: jdbc:hive2://localhost:10000> show tables;
++-------------+
+|  tab_name   |
++-------------+
+| nascimento  |
+| pop         |
++-------------+
+2 rows selected (0.274 seconds)
+0: jdbc:hive2://localhost:10000> select * from nascimento where ano=2016 limit 10;
++------------------+------------------+------------------------+-----------------+
+| nascimento.nome  | nascimento.sexo  | nascimento.frequencia  | nascimento.ano  |
++------------------+------------------+------------------------+-----------------+
+| Emma             | F                | 19471                  | 2016            |
+| Olivia           | F                | 19327                  | 2016            |
+| Ava              | F                | 16283                  | 2016            |
+| Sophia           | F                | 16112                  | 2016            |
+| Isabella         | F                | 14772                  | 2016            |
+| Mia              | F                | 14415                  | 2016            |
+| Charlotte        | F                | 13080                  | 2016            |
+| Abigail          | F                | 11747                  | 2016            |
+| Emily            | F                | 10957                  | 2016            |
+| Harper           | F                | 10773                  | 2016            |
++------------------+------------------+------------------------+-----------------+
+10 rows selected (2.431 seconds)
+0: jdbc:hive2://localhost:10000> select count(nome) as qdt from nascimento where ano=2017;
+WARNING: Hive-on-MR is deprecated in Hive 2 and may not be available in the future versions. Consider using a different execution engine (i.e. spark, tez) or using Hive 1.X releases.
++--------+
+|  qdt   |
++--------+
+| 32469  |
++--------+
+1 row selected (125.382 seconds)
+0: jdbc:hive2://localhost:10000> select sum(frequencia) as qtd from nascimento where ano=2017;
+WARNING: Hive-on-MR is deprecated in Hive 2 and may not be available in the future versions. Consider using a different execution engine (i.e. spark, tez) or using Hive 1.X releases.
++----------+
+|   qtd    |
++----------+
+| 3546301  |
++----------+
+1 row selected (37.896 seconds)
+0: jdbc:hive2://localhost:10000> select sexo, sum(frequencia) as qtd from nascimento where ano=2015 group by sexo;
+WARNING: Hive-on-MR is deprecated in Hive 2 and may not be available in the future versions. Consider using a different execution engine (i.e. spark, tez) or using Hive 1.X releases.
++-------+----------+
+| sexo  |   qtd    |
++-------+----------+
+| F     | 1778883  |
+| M     | 1909804  |
++-------+----------+
+2 rows selected (12.204 seconds)
+
+0: jdbc:hive2://localhost:10000> select ano, sexo, sum(frequencia) as qtd from nascimento group by ano,sexo order by ano desc;
+WARNING: Hive-on-MR is deprecated in Hive 2 and may not be available in the future versions. Consider using a different execution engine (i.e. spark, tez) or using Hive 1.X releases.
++-------+-------+----------+
+|  ano  | sexo  |   qtd    |
++-------+-------+----------+
+| 2017  | M     | 1834490  |
+| 2017  | F     | 1711811  |
+| 2016  | M     | 1889052  |
+| 2016  | F     | 1763916  |
+| 2015  | M     | 1909804  |
+| 2015  | F     | 1778883  |
++-------+-------+----------+
+6 rows selected (9.757 seconds)
+0: jdbc:hive2://localhost:10000> select ano, sexo, sum(frequencia) as qtd from nascimento where nome like 'A%' group by ano,sexo order by ano desc;
+WARNING: Hive-on-MR is deprecated in Hive 2 and may not be available in the future versions. Consider using a different execution engine (i.e. spark, tez) or using Hive 1.X releases.
++-------+-------+---------+
+|  ano  | sexo  |   qtd   |
++-------+-------+---------+
+| 2017  | M     | 185566  |
+| 2017  | F     | 308551  |
+| 2016  | M     | 191854  |
+| 2016  | F     | 324185  |
+| 2015  | M     | 194722  |
+| 2015  | F     | 329690  |
++-------+-------+---------+
+6 rows selected (58.198 seconds)
+
+0: jdbc:hive2://localhost:10000> Closing: 0: jdbc:hive2://localhost:10000
+root@hive_server:/opt# exit
+PS E:\projetos\docker-bigdata> docker-compose stop
+Stopping hive-server               ... done
+Stopping hive_metastore            ... done
+Stopping hive-metastore-postgresql ... done
+Stopping datanode                  ... done
+Stopping zookeeper                 ... done
+Stopping namenode                  ... done
+Stopping database                  ... done
+Stopping spark                     ... done
+PS E:\projetos\docker-bigdata>
